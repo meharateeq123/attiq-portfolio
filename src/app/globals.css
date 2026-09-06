@@ -1,0 +1,473 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* Surfaces — deep cinematic navy */
+  --ink-950: #03050b;
+  --ink-900: #060911;
+  --ink-850: #090e1a;
+  --ink-800: #0d1424;
+  --ink-750: #121b2e;
+
+  /* Accents — blue / cyan */
+  --blue-300: #8cc2ff;
+  --blue-400: #57a6ff;
+  --blue-500: #2b86f5;
+  --blue-600: #1566d6;
+  --cyan-300: #7ee8ff;
+  --cyan-400: #35d0f5;
+
+  /* Type */
+  --text: #e9eefb;
+  --text-soft: #b9c4d8;
+  --muted: #8593ad;
+  --dim: #5a6880;
+
+  /* Lines */
+  --line: rgba(125, 165, 225, 0.14);
+  --line-soft: rgba(125, 165, 225, 0.08);
+  --line-hot: rgba(87, 166, 255, 0.45);
+
+  /* Glow */
+  --glow-blue: 0 0 0 1px rgba(87, 166, 255, 0.25), 0 0 32px -6px rgba(43, 134, 245, 0.55);
+
+  --nav-h: 72px;
+  --background: var(--ink-950);
+  --foreground: var(--text);
+}
+
+@theme inline {
+  --color-ink-950: var(--ink-950);
+  --color-ink-900: var(--ink-900);
+  --color-ink-850: var(--ink-850);
+  --color-ink-800: var(--ink-800);
+  --color-ink-750: var(--ink-750);
+
+  --color-blue-300: var(--blue-300);
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-blue-600: var(--blue-600);
+  --color-cyan-300: var(--cyan-300);
+  --color-cyan-400: var(--cyan-400);
+
+  --color-text: var(--text);
+  --color-text-soft: var(--text-soft);
+  --color-muted: var(--muted);
+  --color-dim: var(--dim);
+
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-line-hot: var(--line-hot);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --font-display: var(--font-display), "Archivo", system-ui, sans-serif;
+  --font-sans: var(--font-sans), system-ui, sans-serif;
+  --font-mono: var(--font-mono), ui-monospace, monospace;
+}
+
+/* ============================================================
+   BASE
+   ============================================================ */
+* {
+  min-width: 0;
+}
+
+html {
+  /* Lenis drives scrolling; never let the browser fight it */
+  scroll-behavior: auto;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--ink-950);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip;
+}
+
+::selection {
+  background: rgba(43, 134, 245, 0.35);
+  color: #fff;
+}
+
+/* Lenis */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ink-950);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(var(--blue-600), #0b3f8f);
+  border-radius: 99px;
+  border: 3px solid var(--ink-950);
+}
+
+/* Focus */
+:focus-visible {
+  outline: 2px solid var(--blue-400);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ============================================================
+   TYPOGRAPHY UTILITIES
+   ============================================================ */
+.font-display {
+  font-family: var(--font-display);
+}
+
+/* Huge cinematic headline — tight, heavy, slightly condensed feel.
+   Sized so "ATTIQ UR REHMAN" stays on one line inside the hero's left column
+   at desktop widths; any larger and it wraps into the 3D scene. */
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.88;
+  letter-spacing: -0.035em;
+  font-size: clamp(2.1rem, 5.1vw, 5.4rem);
+  text-transform: uppercase;
+}
+
+/* Section headings. Sized to keep a two-line headline at two lines inside the
+   narrowest column that uses it (the sticky intro in "What I Build"). */
+.display-lg {
+  font-family: var(--font-display);
+  font-weight: 800;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-size: clamp(1.7rem, 3.1vw, 2.75rem);
+  text-transform: uppercase;
+}
+
+.display-md {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  text-transform: uppercase;
+}
+
+/* Small letterspaced mono labels — the eyebrow motif */
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: clamp(0.625rem, 0.85vw, 0.72rem);
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.label-mono {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+/* Gradient blue fill for the accent headline line.
+   The ramp is vertical on purpose. Each word is its own clipping element (they
+   animate independently), so a horizontal ramp would restart at every word and
+   read as banding. Top-light to deep-blue looks identical on every word. */
+.text-grad {
+  background: linear-gradient(
+    180deg,
+    #a8d4ff 0%,
+    var(--blue-400) 46%,
+    var(--blue-600) 100%
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ============================================================
+   SURFACES
+   ============================================================ */
+.panel {
+  background:
+    linear-gradient(165deg, rgba(23, 38, 66, 0.62) 0%, rgba(9, 14, 26, 0.72) 62%),
+    rgba(6, 9, 17, 0.5);
+  border: 1px solid var(--line);
+}
+
+/* Backdrop blur is the single most expensive thing on this page and there are
+   a dozen panels on screen at once. Desktop only — phones get the (already
+   opaque enough) gradient fill instead, which is what keeps scrolling smooth. */
+@media (min-width: 768px) {
+  .panel {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+.hairline {
+  border-top: 1px solid var(--line-soft);
+}
+
+/* Fine grid texture */
+.grid-tex {
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+/* Film grain — sells the "cinematic" grade. Fixed and above the content layer
+   so it sits over the whole frame rather than scrolling with it. */
+.grain::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* ============================================================
+   WEBGL LAYER
+   ============================================================ */
+.scene-layer,
+.scene-fallback {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  /* Its own compositor layer — the page scrolling above never repaints it.
+     Deliberately not `contain: strict`: that adds size containment, and the
+     canvas has to be able to measure its own box. */
+  will-change: transform;
+  contain: layout paint;
+}
+
+/* Shown before device measurement, and whenever WebGL is unavailable. */
+.scene-fallback {
+  background:
+    radial-gradient(48% 42% at 68% 38%, rgba(35, 118, 226, 0.3) 0%, transparent 68%),
+    radial-gradient(60% 50% at 50% 100%, rgba(12, 60, 130, 0.28) 0%, transparent 70%);
+}
+
+/* Cinematic edge falloff over the render — keeps focus on the centre. */
+.scene-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    radial-gradient(78% 72% at 50% 45%, transparent 42%, rgba(3, 5, 11, 0.55) 82%, rgba(3, 5, 11, 0.9) 100%),
+    linear-gradient(to bottom, rgba(3, 5, 11, 0.75) 0%, transparent 22%, transparent 74%, rgba(3, 5, 11, 0.85) 100%);
+}
+
+/* Label layer sits above the vignette so the chips never get dimmed by it. */
+.scene-labels {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* The "AI" mark pinned to the centre of the core. */
+.core-mark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  visibility: hidden;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #eaf6ff;
+  text-shadow:
+    0 0 18px rgba(126, 232, 255, 0.95),
+    0 0 46px rgba(43, 134, 245, 0.8);
+  user-select: none;
+  will-change: transform, opacity;
+}
+
+/* Holographic label chips tethered to the 3D nodes. Positioned from the render
+   loop, which writes a transform onto each one every frame. */
+.node-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+  visibility: hidden;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #cfe6ff;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid rgba(96, 176, 255, 0.42);
+  background: linear-gradient(150deg, rgba(18, 46, 88, 0.72), rgba(6, 12, 24, 0.6));
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 0 24px -6px rgba(51, 140, 245, 0.8),
+    inset 0 0 18px -10px rgba(140, 200, 255, 0.9);
+  user-select: none;
+  will-change: transform, opacity;
+}
+/* Corner ticks — the holographic bracket detail */
+.node-chip::before,
+.node-chip::after {
+  content: "";
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-color: var(--cyan-300);
+  border-style: solid;
+}
+.node-chip::before {
+  top: -1px;
+  left: -1px;
+  border-width: 1px 0 0 1px;
+}
+.node-chip::after {
+  bottom: -1px;
+  right: -1px;
+  border-width: 0 1px 1px 0;
+}
+
+/* ============================================================
+   TILT CARDS
+   ============================================================ */
+.tilt-card {
+  position: relative;
+  transform-style: preserve-3d;
+  /* Only the return-to-rest is eased; the tilt itself is driven per-frame. */
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+/* Specular highlight following the cursor */
+.tilt-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  background: radial-gradient(
+    260px circle at var(--gx, 50%) var(--gy, 50%),
+    rgba(120, 195, 255, 0.16),
+    transparent 62%
+  );
+}
+.tilt-card:hover .tilt-glare {
+  opacity: 1;
+}
+
+/* No hover on touch — leave the cards flat rather than tilting on tap. */
+@media (hover: none) {
+  .tilt-card {
+    transform: none !important;
+  }
+  .tilt-glare {
+    display: none;
+  }
+}
+
+/* Content sits above the WebGL layer */
+.above {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   ANIMATION PRIMITIVES (GSAP sets the final state)
+   ============================================================ */
+[data-reveal] {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.line-sweep {
+  background: linear-gradient(90deg, transparent, var(--line-hot), transparent);
+  height: 1px;
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  70% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2.8s cubic-bezier(0.24, 0.6, 0.3, 1) infinite;
+}
+
+@keyframes scroll-cue {
+  0%, 100% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(5px); opacity: 0.45; }
+}
+.scroll-cue {
+  animation: scroll-cue 2s ease-in-out infinite;
+}
+
+/* Scanline travelling down a holographic panel */
+@keyframes scan-sweep {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(420%); }
+}
+.scan-sweep {
+  animation: scan-sweep 5.5s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+}
+
+/* Chips drifting around the schematic */
+@keyframes float-chip {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.float-chip {
+  animation: float-chip 6s ease-in-out infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  animation: marquee 42s linear infinite;
+}
+
+/* ============================================================
+   ACCESSIBILITY
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+  [data-reveal] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
