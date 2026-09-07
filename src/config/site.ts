@@ -147,6 +147,8 @@ export const agentic = {
  * ------------------------------------------------------------------------- */
 export type Project = {
   title: string;
+  /** `owner/name` on GitHub, printed under the title. Omit if there is no repo. */
+  repo?: string;
   summary: string;
   tags: string[];
   demo: string;
@@ -155,43 +157,68 @@ export type Project = {
   accent?: string;
 };
 
+const GH = "https://github.com/meharateeq123";
+
 export const work = {
   index: "04",
   eyebrow: "Selected Work",
-  headline: ["Projects", "that create impact"],
-  body: "A showcase of recent work. Each project is built around real use cases, modern tooling, and a bias toward automation.",
+  headline: ["Projects", "I have shipped"],
+  body: "Real repositories rather than case studies. Each card links straight to the source on GitHub.",
   projects: [
+    /* The two below have no public repo yet. Paste the URL into `code` (and
+     * `repo` for the slug under the title) and the GitHub link appears on the
+     * card by itself — a "#" simply hides it. */
     {
-      title: "Autonomous Research Agent",
+      title: "Video Editing Tool",
       summary:
-        "An agent that researches a topic, analyses what it finds, and produces a structured report without supervision.",
-      tags: ["Python", "LLM APIs", "Automation"],
+        "A tool for cutting and assembling video — a timeline to arrange clips on, edits applied non-destructively, and an export at the end of it.",
+      tags: ["TypeScript", "Video", "Web"],
       demo: "#",
       code: "#",
     },
     {
-      title: "AI Workflow Automation",
+      title: "Lavithe Portal",
       summary:
-        "Repetitive multi-step processes handed over to coordinated agents and API integrations.",
-      tags: ["Next.js", "Python", "APIs"],
+        "The web portal for Lavithe — the interface its users work in day to day, built as a full-stack app over the platform's own data.",
+      tags: ["Next.js", "Full-Stack", "Dashboard"],
       demo: "#",
       code: "#",
     },
     {
-      title: "Intelligent RAG Assistant",
+      title: "CareerPilot AI",
+      repo: "meharateeq123/your-careerpilot-ai",
       summary:
-        "A retrieval-augmented assistant that answers questions from custom documents and cites its sources.",
-      tags: ["Python", "RAG", "Vector DB"],
+        "An AI career assistant: it takes where someone is and where they want to be, and turns the gap between the two into concrete next steps.",
+      tags: ["TypeScript", "AI", "Next.js"],
       demo: "#",
-      code: "#",
+      code: `${GH}/your-careerpilot-ai`,
     },
     {
-      title: "Full-Stack SaaS Platform",
+      title: "Personal Assistant",
+      repo: "meharateeq123/yourpersonalassisstant",
       summary:
-        "A complete SaaS foundation — auth, billing-ready architecture, and AI-powered features throughout.",
-      tags: ["Next.js", "TypeScript", "AI"],
+        "A personal assistant that holds context between conversations and takes on the small recurring tasks that never justify an app of their own.",
+      tags: ["TypeScript", "LLM APIs", "Agents"],
       demo: "#",
-      code: "#",
+      code: `${GH}/yourpersonalassisstant`,
+    },
+    {
+      title: "Student Portal",
+      repo: "meharateeq123/student",
+      summary:
+        "A student-facing portal — courses, records and progress in one place instead of spread across spreadsheets and email threads.",
+      tags: ["TypeScript", "Full-Stack", "Dashboard"],
+      demo: "#",
+      code: `${GH}/student`,
+    },
+    {
+      title: "This Portfolio",
+      repo: "meharateeq123/attiq-portfolio",
+      summary:
+        "The site you are on. One persistent WebGL layer behind the whole page, procedural geometry instead of downloaded models, and scroll-driven camera work.",
+      tags: ["Next.js", "Three.js", "GSAP"],
+      demo: "#",
+      code: `${GH}/attiq-portfolio`,
     },
   ] satisfies Project[],
 } as const;

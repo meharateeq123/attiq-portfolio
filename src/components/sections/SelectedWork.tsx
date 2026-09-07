@@ -27,7 +27,10 @@ export function SelectedWork() {
         </Reveal>
       </div>
 
-      <Reveal variant="up" stagger={0.12} className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Three across rather than four: at four the cards are narrow enough
+          that a repo slug wraps, and the row no longer divides the project
+          count evenly. */}
+      <Reveal variant="up" stagger={0.12} className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {work.projects.map((project, i) => (
           <TiltCard key={project.title} max={7}>
             <article
@@ -56,9 +59,19 @@ export function SelectedWork() {
 
             {/* Body */}
             <div className="flex flex-1 flex-col gap-3.5 p-5">
-              <h3 className="font-display text-[1rem] font-bold uppercase leading-tight tracking-[0.02em] text-text transition-colors duration-300 group-hover:text-blue-300">
-                {project.title}
-              </h3>
+              <div className="flex flex-col gap-1.5">
+                <h3 className="font-display text-[1rem] font-bold uppercase leading-tight tracking-[0.02em] text-text transition-colors duration-300 group-hover:text-blue-300">
+                  {project.title}
+                </h3>
+                {/* The repository this card actually points at. Shown because a
+                    title is a label, and the slug is the thing you can go and
+                    check for yourself. */}
+                {project.repo && (
+                  <span className="truncate font-mono text-[0.6rem] tracking-[0.06em] text-dim">
+                    {project.repo}
+                  </span>
+                )}
+              </div>
               <p className="flex-1 text-[0.8rem] leading-relaxed text-muted">{project.summary}</p>
 
               <ul className="flex flex-wrap gap-1.5">

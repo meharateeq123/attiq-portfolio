@@ -17,26 +17,27 @@ export function ProjectVisual({ variant, className = "" }: { variant: number; cl
       preserveAspectRatio="xMidYMid slice"
     >
       <defs>
-        <linearGradient id={`pv-bg-${v}`} x1="0" y1="0" x2="0.6" y2="1">
+        <linearGradient id={`pv-bg-${variant}`} x1="0" y1="0" x2="0.6" y2="1">
           <stop offset="0%" stopColor="#0b1729" />
           <stop offset="100%" stopColor="#050912" />
         </linearGradient>
-        <linearGradient id={`pv-bar-${v}`} x1="0" y1="1" x2="0" y2="0">
+        <linearGradient id={`pv-bar-${variant}`} x1="0" y1="1" x2="0" y2="0">
           <stop offset="0%" stopColor="#1566d6" stopOpacity="0.35" />
           <stop offset="100%" stopColor="#7ee8ff" stopOpacity="0.95" />
         </linearGradient>
-        <filter id={`pv-glow-${v}`}>
+        <filter id={`pv-glow-${variant}`}>
           <feGaussianBlur stdDeviation="2.4" />
         </filter>
-        {/* Every id is variant-suffixed: four of these render on one page and
-            duplicate ids would make all four resolve to the first definition. */}
-        <linearGradient id={`pv-fade-${v}`} x1="0" y1="0" x2="0" y2="1">
+        {/* Ids are suffixed with the raw index, not the wrapped variant: with
+            more cards than artworks two of them share a variant, and duplicate
+            ids would make both resolve to whichever definition came first. */}
+        <linearGradient id={`pv-fade-${variant}`} x1="0" y1="0" x2="0" y2="1">
           <stop offset="55%" stopColor="#050912" stopOpacity="0" />
           <stop offset="100%" stopColor="#050912" stopOpacity="0.75" />
         </linearGradient>
       </defs>
 
-      <rect width="320" height="180" fill={`url(#pv-bg-${v})`} />
+      <rect width="320" height="180" fill={`url(#pv-bg-${variant})`} />
 
       {/* Faint grid substrate shared by every variant */}
       <g stroke="#57a6ff" strokeOpacity="0.07" strokeWidth="0.6">
@@ -74,7 +75,7 @@ export function ProjectVisual({ variant, className = "" }: { variant: number; cl
             [214, 124],
           ].map(([cx, cy], i) => (
             <g key={i}>
-              <circle cx={cx} cy={cy} r="7" fill="#7ee8ff" opacity="0.18" filter={`url(#pv-glow-${v})`} />
+              <circle cx={cx} cy={cy} r="7" fill="#7ee8ff" opacity="0.18" filter={`url(#pv-glow-${variant})`} />
               <circle cx={cx} cy={cy} r="3.2" fill="#9fdcff" />
             </g>
           ))}
@@ -123,7 +124,7 @@ export function ProjectVisual({ variant, className = "" }: { variant: number; cl
                 width={[88, 64, 44, 30][i]}
                 height="7"
                 rx="3.5"
-                fill={`url(#pv-bar-${v})`}
+                fill={`url(#pv-bar-${variant})`}
               />
             </g>
           ))}
@@ -147,7 +148,7 @@ export function ProjectVisual({ variant, className = "" }: { variant: number; cl
                 width="11"
                 height={h}
                 rx="1.5"
-                fill={`url(#pv-bar-${v})`}
+                fill={`url(#pv-bar-${variant})`}
                 opacity={0.45 + (i % 3) * 0.2}
               />
             );
@@ -164,7 +165,7 @@ export function ProjectVisual({ variant, className = "" }: { variant: number; cl
       )}
 
       {/* Foreground fade so the art never competes with the card text below */}
-      <rect width="320" height="180" fill={`url(#pv-fade-${v})`} />
+      <rect width="320" height="180" fill={`url(#pv-fade-${variant})`} />
     </svg>
   );
 }
