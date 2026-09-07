@@ -3,10 +3,26 @@
 import { useLayoutEffect, useRef } from "react";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
 import { profile, heroStats, edgeMotifs } from "@/config/site";
-import { DisplayHeading } from "../ui/DisplayHeading";
+import { HeroName } from "../ui/HeroName";
 import { Button } from "../ui/Button";
 import { ArrowRight, ArrowDown } from "../ui/Icons";
 import { useSmoothScroll } from "../layout/SmoothScroll";
+
+/* ---------------------------------------------------------------------------
+ * Name decrypt
+ *
+ * Each glyph churns through junk characters and then locks into its real one,
+ * left to right. Sizes are frozen to the measured width of the real character
+ * first: without that, every swap to a narrower glyph reflows the whole line
+ * and the name jitters for the length of the animation.
+ * ------------------------------------------------------------------------- */
+const CHARSET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789#%&@$*+=<>/";
+/** Seconds between one glyph starting to churn and the next. */
+const LOCK_STAGGER = 0.036;
+/** How long a glyph churns before it resolves. */
+const CHURN = 0.5;
+/** Seconds between junk swaps. Slower than a frame, or it reads as static. */
+const FLICKER = 0.045;
 
 export function Hero() {
   const root = useRef<HTMLElement>(null);
@@ -19,19 +35,85 @@ export function Hero() {
 
     // The items start at opacity-0 in markup so there's no flash before GSAP
     // takes over — which means the reduced-motion path has to reveal them
-    // explicitly rather than just skipping the animation.
+    // explicitly rather than just skipping the animation. The boot lines and
+    // name glyphs are left exactly as rendered: both carry their full text in
+    // markup, so doing nothing is already the correct static state.
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      gsap.set(el.querySelectorAll("[data-hero-item]"), { opacity: 1, y: 0 });
+      gsap.set(el.querySelectorAll("[data-hero-item], [data-hero-lead]"), { opacity: 1, y: 0 });
       return;
     }
 
     const ctx = gsap.context(() => {
-      // Staggered entrance for everything except the headline, which runs its
-      // own word reveal.
-      gsap.fromTo(
+      const chars = gsap.utils.toArray<HTMLElement>("[data-name-char]");
+
+      // Measure every glyph before touching any of them: interleaving the reads
+      // with the writes below would force a layout flush per character.
+      const widths = chars.map((c) => c.getBoundingClientRect().width);
+      chars.forEach((c, i) => {
+        c.style.width = `${widths[i].toFixed(2)}px`;
+        c.dataset.scramble = "";
+        c.textContent = "";
+      });
+
+      gsap.set("[data-hero-item]", { y: 30, opacity: 0 });
+      gsap.set("[data-hero-lead]", { y: 12, opacity: 0 });
+
+      const runtime = chars.length * LOCK_STAGGER + CHURN;
+      const clock = { t: 0 };
+      let lastFlick = -1;
+
+      const tl = gsap.timeline({ delay: 0.25 });
+
+      // --- 1. the eyebrow leads in ------------------------------------------
+      tl.to("[data-hero-lead]", { y: 0, opacity: 1, duration: 0.7, ease: "expo.out" });
+
+      // --- 2. the name decrypts ---------------------------------------------
+      tl.to(clock, {
+        t: runtime,
+        duration: runtime,
+        ease: "none",
+        onUpdate: () => {
+          const now = clock.t;
+          const flick = Math.floor(now / FLICKER);
+          const swap = flick !== lastFlick;
+          lastFlick = flick;
+
+          for (let i = 0; i < chars.length; i++) {
+            const el = chars[i];
+            const start = i * LOCK_STAGGER;
+
+            // Still ahead of the wave: hold the slot open but empty, so the
+            // line builds up rather than opening as a solid block of noise.
+            if (now < start) continue;
+
+            if (now >= start + CHURN) {
+              if (el.dataset.scramble !== undefined) {
+                delete el.dataset.scramble;
+                el.textContent = el.dataset.char ?? "";
+              }
+            } else if (swap) {
+              el.textContent = CHARSET[(Math.random() * CHARSET.length) | 0];
+            }
+          }
+        },
+        onComplete: () => {
+          // Hand the glyphs back to normal layout. The frozen widths are in
+          // pixels, so leaving them on would break the name at the next resize
+          // or font-size step.
+          chars.forEach((c) => {
+            c.style.width = "";
+            delete c.dataset.scramble;
+            c.textContent = c.dataset.char ?? "";
+          });
+        },
+      }, "-=0.45");
+
+      // --- 3. everything below it -------------------------------------------
+      tl.to(
         "[data-hero-item]",
-        { y: 34, opacity: 0 },
-        { y: 0, opacity: 1, duration: 1.1, stagger: 0.11, delay: 0.45, ease: "expo.out" },
+        { y: 0, opacity: 1, duration: 1, stagger: 0.09, ease: "expo.out" },
+        // Starts while the last glyphs are still resolving.
+        `-=${CHURN + 0.15}`,
       );
 
       // The copy drifts up and dissolves as the section leaves — it hands the
@@ -78,25 +160,19 @@ export function Hero() {
       <div className="mx-auto w-full max-w-[1400px]">
         {/* Capped so the copy column never runs into the 3D core on the right */}
         <div ref={copy} className="max-w-[min(100%,46rem)]">
-          <p data-hero-item className="eyebrow mb-6 opacity-0">
+          {/* Leads the sequence rather than joining the group below the name:
+              a line that sits above the headline should not arrive after it. */}
+          <p data-hero-lead className="eyebrow mb-6 opacity-0">
             {profile.eyebrow}
           </p>
 
-          <DisplayHeading
-            as="h1"
-            size="display-xl"
-            lines={profile.nameLines}
-            accentFrom={1}
-            trigger={false}
-            delay={0.15}
-            className="mb-5"
-          />
+          <HeroName lines={profile.nameLines} className="mb-6" />
 
           <div data-hero-item className="mb-7 flex items-center gap-4 opacity-0">
-            <h2 className="font-display text-[clamp(0.95rem,2.1vw,1.6rem)] font-semibold uppercase tracking-[0.3em] text-text-soft">
+            <h2 className="label-mono text-[clamp(0.66rem,1.1vw,0.82rem)] font-medium text-blue-300">
               {profile.role}
             </h2>
-            <span className="hidden h-px flex-1 max-w-[8rem] bg-[linear-gradient(90deg,var(--line-hot),transparent)] sm:block" />
+            <span className="h-px flex-1 max-w-[10rem] bg-[linear-gradient(90deg,var(--line-hot),transparent)]" />
           </div>
 
           <p

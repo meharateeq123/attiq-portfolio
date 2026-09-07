@@ -37,12 +37,16 @@ export const coreLabel: { el: HTMLElement | null } = { el: null };
 
 export type PerfTier = "low" | "mid" | "high";
 
-/** Particle / node budgets per device tier. Mobile gets a genuinely lighter scene. */
+/**
+ * Particle / node budgets per device tier. Mobile gets a genuinely lighter
+ * scene. Stream counts are deliberately low: they sit far behind the core as
+ * stage haze, and a dense set of them reads as stripes across the headline.
+ */
 export const TIER_BUDGET: Record<
   PerfTier,
-  { particles: number; nodes: number; streams: number; shards: number; dpr: [number, number] }
+  { particles: number; nodes: number; streams: number; dpr: [number, number] }
 > = {
-  low: { particles: 420, nodes: 9, streams: 6, shards: 3, dpr: [1, 1] },
-  mid: { particles: 1100, nodes: 14, streams: 10, shards: 5, dpr: [1, 1.5] },
-  high: { particles: 2400, nodes: 18, streams: 14, shards: 7, dpr: [1, 2] },
+  low: { particles: 420, nodes: 9, streams: 0, dpr: [1, 1] },
+  mid: { particles: 1100, nodes: 12, streams: 4, dpr: [1, 1.5] },
+  high: { particles: 2400, nodes: 16, streams: 6, dpr: [1, 2] },
 };

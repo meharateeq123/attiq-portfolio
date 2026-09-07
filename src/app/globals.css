@@ -167,6 +167,52 @@ html.lenis body {
   text-transform: uppercase;
 }
 
+/* ---- Hero name -------------------------------------------------------------
+   A wide-tracked kicker over one heavy block. Both lines at the same weight
+   read as a paragraph; this contrast is what makes the name read as a piece of
+   typography. Sizes are capped so "ATTIQ UR REHMAN" holds one line inside the
+   hero's left column at desktop widths, where the 3D core owns the right. */
+.hero-kicker {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1rem, 2.1vw, 2rem);
+  line-height: 1;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.hero-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.4rem, 5.4vw, 5.5rem);
+  line-height: 0.86;
+  letter-spacing: -0.045em;
+  text-transform: uppercase;
+  /* The glow belongs on the line, not on the glyphs: the glyphs carry their own
+     animated filter during the entrance and the two would overwrite each other. */
+  filter: drop-shadow(0 0 34px rgba(43, 134, 245, 0.26));
+}
+
+/* One glyph of the hero name.
+   The resolved state is the default so no-JS and reduced-motion visitors get
+   the finished name; the scramble adds [data-scramble] and takes it back off
+   glyph by glyph as each one locks. */
+.glyph {
+  display: inline-block;
+  text-align: center;
+  transition:
+    opacity 240ms ease,
+    filter 240ms ease;
+}
+
+.glyph[data-scramble] {
+  opacity: 0.34;
+  /* Unresolved glyphs read as signal rather than as text: soft, hot, and just
+     out of focus, so locking into the real letter lands as a snap. */
+  filter: blur(0.9px) brightness(1.8);
+}
+
 /* Small letterspaced mono labels — the eyebrow motif */
 .eyebrow {
   font-family: var(--font-mono);

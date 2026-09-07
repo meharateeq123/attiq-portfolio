@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { sceneState, labelRegistry } from "@/lib/scene-state";
@@ -11,6 +11,7 @@ type NodeSpec = {
   phase: number;
   tilt: number;
   height: number;
+  /** World radius of the bead. */
   size: number;
   labelled: boolean;
   /** Orbit in the screen plane rather than around the vertical axis. */
@@ -18,12 +19,15 @@ type NodeSpec = {
 };
 
 /**
- * Nodes orbiting the core, each tethered to it by a gradient link, with the
- * first few carrying the holographic labels rendered by <SceneLabels />.
+ * Solid beads orbiting the core, with a tether drawn only to the labelled ones.
  *
- * The network is two draw calls — one Points, one LineSegments. Positions are
- * written into buffers allocated once up front, so the render loop never
- * allocates and never triggers a React render.
+ * This used to be a glowing point cloud with a link from every node to the
+ * centre plus chords between neighbours. At hero scale that read as a tangle of
+ * lines across the headline rather than as a network, so the ambient nodes are
+ * now untethered mass and only the five labelled anchors keep a line home. The
+ * beads are one instanced draw call and their transforms are written into
+ * buffers allocated once up front, so the render loop never allocates and never
+ * triggers a React render.
  */
 export function NodeNetwork({
   count = 14,
@@ -45,31 +49,30 @@ export function NodeNetwork({
     for (let i = 0; i < labelCount; i++) {
       const a = (i / Math.max(1, labelCount)) * Math.PI * 2 + Math.PI * 0.22;
       // Planar: a node orbiting in depth swings across the core and lands its
-      // label on top of the cube. Keeping the labelled ring in the screen
-      // plane holds the chips at a constant distance around it.
+      // label on top of it. Keeping the labelled ring in the screen plane holds
+      // the chips at a constant distance around the monolith.
       list.push({
-        radius: 3.4,
+        radius: 3.9,
         speed: 0.028,
         phase: a,
         tilt: 0,
         height: 0,
-        size: 18,
+        size: 0.13,
         labelled: true,
         planar: true,
       });
     }
 
-    // Ambient nodes fill the volume behind them. The radius is kept tight on
-    // purpose: wider orbits push links off the edge of the frame, which reads
-    // as stray lines rather than a network.
+    // Ambient beads fill the volume behind them, out past the armature rings so
+    // they never collide with the core's silhouette.
     for (let i = 0; i < Math.max(0, count - labelCount); i++) {
       list.push({
-        radius: 1.9 + (((i * 37) % 100) / 100) * 1.8,
-        speed: 0.07 + (((i * 53) % 100) / 100) * 0.11,
+        radius: 3.2 + (((i * 37) % 100) / 100) * 2.4,
+        speed: 0.05 + (((i * 53) % 100) / 100) * 0.09,
         phase: i * 2.399963, // golden angle spreads them evenly
         tilt: 0.3 + (((i * 71) % 100) / 100) * 0.7,
-        height: -1.6 + (((i * 91) % 100) / 100) * 3.2,
-        size: 6 + (((i * 29) % 100) / 100) * 5,
+        height: -2 + (((i * 91) % 100) / 100) * 4,
+        size: 0.04 + (((i * 29) % 100) / 100) * 0.05,
         labelled: false,
         planar: false,
       });
@@ -78,73 +81,51 @@ export function NodeNetwork({
   }, [count, labelCount]);
 
   const n = specs.length;
-  const chordCount = Math.max(0, n - labelCount - 1);
-  const segCount = n + chordCount;
+  const segCount = labelCount;
 
-  const { pointGeo, lineGeo, positions, linePos } = useMemo(() => {
+  const { beads, lineGeo, positions, linePos } = useMemo(() => {
     const positions = new Float32Array(n * 3);
-    const sizes = new Float32Array(n);
-    const seeds = new Float32Array(n);
-    specs.forEach((s, i) => {
-      sizes[i] = s.size;
-      seeds[i] = i * 1.37;
+
+    const beadGeo = new THREE.SphereGeometry(1, 16, 12);
+    const beadMat = new THREE.MeshStandardMaterial({
+      color: "#12263f",
+      metalness: 0.95,
+      roughness: 0.2,
+      emissive: new THREE.Color("#2f8ae0"),
+      emissiveIntensity: 1.1,
+      envMapIntensity: 2.2,
     });
+    const beads = new THREE.InstancedMesh(beadGeo, beadMat, Math.max(1, n));
 
-    const pointGeo = new THREE.BufferGeometry();
-    pointGeo.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    pointGeo.setAttribute("aSize", new THREE.BufferAttribute(sizes, 1));
-    pointGeo.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
-
-    const linePos = new Float32Array(segCount * 2 * 3);
-    const lineCol = new Float32Array(segCount * 2 * 3);
-    // Colour ramp along each link: dim at the core, bright cyan at the node.
+    const linePos = new Float32Array(Math.max(1, segCount) * 2 * 3);
+    const lineCol = new Float32Array(Math.max(1, segCount) * 2 * 3);
+    // Colour ramp along each tether: dim at the core, bright cyan at the node.
     for (let i = 0; i < segCount; i++) {
-      lineCol.set([0.08, 0.34, 0.75], i * 6);
+      lineCol.set([0.06, 0.28, 0.62], i * 6);
       lineCol.set([0.42, 0.85, 1.0], i * 6 + 3);
     }
     const lineGeo = new THREE.BufferGeometry();
     lineGeo.setAttribute("position", new THREE.BufferAttribute(linePos, 3));
     lineGeo.setAttribute("color", new THREE.BufferAttribute(lineCol, 3));
+    lineGeo.setDrawRange(0, segCount * 2);
 
-    return { pointGeo, lineGeo, positions, linePos };
-  }, [specs, n, segCount]);
+    return { beads, lineGeo, positions, linePos };
+  }, [n, segCount]);
 
-  const pointMaterial = useMemo(
-    () =>
-      new THREE.ShaderMaterial({
-        transparent: true,
-        depthWrite: false,
-        blending: THREE.AdditiveBlending,
-        uniforms: { uTime: { value: 0 }, uScale: { value: 1 } },
-        vertexShader: /* glsl */ `
-          attribute float aSize;
-          attribute float aSeed;
-          uniform float uTime;
-          uniform float uScale;
-          varying float vPulse;
-          void main() {
-            vPulse = 0.65 + 0.35 * sin(uTime * 1.6 + aSeed * 3.0);
-            vec4 mv = modelViewMatrix * vec4(position, 1.0);
-            gl_PointSize = aSize * uScale * vPulse * (14.0 / -mv.z);
-            gl_Position = projectionMatrix * mv;
-          }
-        `,
-        fragmentShader: /* glsl */ `
-          varying float vPulse;
-          void main() {
-            float d = length(gl_PointCoord - vec2(0.5)) * 2.0;
-            float core = pow(max(0.0, 1.0 - d), 4.0);
-            float halo = pow(max(0.0, 1.0 - d), 1.5) * 0.4;
-            float a = (core + halo) * vPulse;
-            if (a < 0.01) discard;
-            gl_FragColor = vec4(mix(vec3(0.35, 0.7, 1.0), vec3(0.85, 0.97, 1.0), core) * a, a);
-          }
-        `,
-      }),
-    [],
-  );
+  useEffect(() => {
+    return () => {
+      beads.geometry.dispose();
+      (beads.material as THREE.Material).dispose();
+      beads.dispose();
+      lineGeo.dispose();
+    };
+  }, [beads, lineGeo]);
 
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const mat4 = useMemo(() => new THREE.Matrix4(), []);
+  const quat = useMemo(() => new THREE.Quaternion(), []);
+  const vec = useMemo(() => new THREE.Vector3(), []);
+  const scl = useMemo(() => new THREE.Vector3(), []);
 
   // Chip dimensions are cached and only re-measured when the viewport changes.
   // Reading offsetWidth in the loop right after writing transforms would force
@@ -154,9 +135,6 @@ export function NodeNetwork({
 
   useFrame(({ clock, size, camera }) => {
     const t = reducedMotion ? 0 : clock.elapsedTime;
-    pointMaterial.uniforms.uTime.value = clock.elapsedTime;
-    // Keep dot sizes stable across viewport heights.
-    pointMaterial.uniforms.uScale.value = Math.min(1.35, Math.max(0.55, size.height / 900));
 
     // --- node positions -------------------------------------------------
     for (let i = 0; i < n; i++) {
@@ -165,25 +143,31 @@ export function NodeNetwork({
 
       if (s.planar) {
         // Ring in the XY plane, flattened vertically so it reads as an ellipse
-        // around the cube. Only a small z wobble, to keep some parallax.
+        // around the core. Only a small z wobble, to keep some parallax.
         positions[i * 3] = Math.cos(a) * s.radius;
-        positions[i * 3 + 1] = Math.sin(a) * s.radius * 0.6;
+        positions[i * 3 + 1] = Math.sin(a) * s.radius * 0.62;
         positions[i * 3 + 2] = Math.sin(t * 0.35 + s.phase) * 0.45;
-        continue;
+      } else {
+        const x = Math.cos(a) * s.radius;
+        const z = Math.sin(a) * s.radius;
+        const y = s.height + Math.sin(t * 0.6 + s.phase) * 0.18;
+        positions[i * 3] = x;
+        positions[i * 3 + 1] = y * Math.cos(s.tilt) - z * Math.sin(s.tilt) * 0.25;
+        positions[i * 3 + 2] = z;
       }
 
-      const x = Math.cos(a) * s.radius;
-      const z = Math.sin(a) * s.radius;
-      const y = s.height + Math.sin(t * 0.6 + s.phase) * 0.18;
-      positions[i * 3] = x;
-      positions[i * 3 + 1] = y * Math.cos(s.tilt) - z * Math.sin(s.tilt) * 0.25;
-      positions[i * 3 + 2] = z;
+      // A slow breathe on the radius keeps the beads from looking pinned.
+      const pulse = s.labelled ? 1 : 0.85 + 0.15 * Math.sin(t * 1.4 + i);
+      vec.set(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
+      scl.setScalar(s.size * pulse);
+      mat4.compose(vec, quat, scl);
+      beads.setMatrixAt(i, mat4);
     }
-    pointGeo.attributes.position.needsUpdate = true;
+    beads.instanceMatrix.needsUpdate = true;
 
-    // --- links ----------------------------------------------------------
+    // --- tethers (labelled anchors only) --------------------------------
     let o = 0;
-    for (let i = 0; i < n; i++) {
+    for (let i = 0; i < segCount; i++) {
       linePos[o++] = 0;
       linePos[o++] = 0;
       linePos[o++] = 0;
@@ -191,17 +175,7 @@ export function NodeNetwork({
       linePos[o++] = positions[i * 3 + 1];
       linePos[o++] = positions[i * 3 + 2];
     }
-    for (let i = 0; i < chordCount; i++) {
-      const a = labelCount + i;
-      const b = labelCount + i + 1;
-      linePos[o++] = positions[a * 3];
-      linePos[o++] = positions[a * 3 + 1];
-      linePos[o++] = positions[a * 3 + 2];
-      linePos[o++] = positions[b * 3];
-      linePos[o++] = positions[b * 3 + 1];
-      linePos[o++] = positions[b * 3 + 2];
-    }
-    lineGeo.attributes.position.needsUpdate = true;
+    if (segCount) lineGeo.attributes.position.needsUpdate = true;
 
     // --- DOM labels -----------------------------------------------------
     // Fade out as soon as the hero starts to leave, so the chips never
@@ -266,12 +240,12 @@ export function NodeNetwork({
 
   return (
     <group ref={group}>
-      <points geometry={pointGeo} material={pointMaterial} />
+      <primitive object={beads} />
       <lineSegments geometry={lineGeo}>
         <lineBasicMaterial
           vertexColors
           transparent
-          opacity={0.3}
+          opacity={0.22}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />

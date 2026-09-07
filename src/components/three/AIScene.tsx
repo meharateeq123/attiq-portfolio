@@ -8,7 +8,7 @@ import { NodeNetwork } from "./NodeNetwork";
 import { ParticleField } from "./ParticleField";
 import { DataStreams } from "./DataStreams";
 import { GridFloor } from "./GridFloor";
-import { Shards } from "./Shards";
+import { StudioEnvironment } from "./StudioEnv";
 import { sceneState, TIER_BUDGET, type PerfTier } from "@/lib/scene-state";
 import { coreNodes } from "@/config/site";
 
@@ -90,6 +90,16 @@ export function AIScene({ tier, reducedMotion }: { tier: PerfTier; reducedMotion
 
   return (
     <>
+      {/* The core is solid metal now, so it needs something to reflect and
+          something to be lit by — without these it renders as a black
+          silhouette. Directional lights only: they have no position falloff, so
+          they keep working as the scroll rig sweeps the core across the frame. */}
+      <StudioEnvironment />
+      <ambientLight intensity={0.42} />
+      <directionalLight position={[6, 7, 6]} intensity={2.5} color="#dbeaff" />
+      <directionalLight position={[-7, -1.5, -4]} intensity={1.7} color="#2f7fd6" />
+      <directionalLight position={[0, -4, 5]} intensity={0.8} color="#7ee8ff" />
+
       {/* The core assembly — swept around the frame by the scroll rig above. */}
       <group ref={root}>
         <AICore reducedMotion={reducedMotion} />
@@ -104,10 +114,12 @@ export function AIScene({ tier, reducedMotion }: { tier: PerfTier; reducedMotion
       </group>
 
       {/* World-space environment, deliberately outside the swept group so it
-          stays put while the core moves through it. */}
+          stays put while the core moves through it. The drifting wireframe
+          shards that used to live here are gone: at hero scale they crossed the
+          headline and read as clutter rather than as depth. Stars and a few
+          distant light columns do the same job without competing. */}
       <ParticleField count={budget.particles} reducedMotion={reducedMotion} />
       {tier !== "low" && <DataStreams count={budget.streams} reducedMotion={reducedMotion} />}
-      <Shards count={budget.shards} reducedMotion={reducedMotion} />
     </>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { nav, profile } from "@/config/site";
+import { nav } from "@/config/site";
 import { useSmoothScroll } from "./SmoothScroll";
 import { ArrowRight } from "../ui/Icons";
 
@@ -65,19 +65,7 @@ export function Nav() {
             : "border-b border-transparent bg-transparent",
         ].join(" ")}
       >
-        <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-between px-5 sm:px-8 lg:px-14 xl:px-20">
-          {/* Wordmark */}
-          <a
-            href="#hero"
-            onClick={(e) => {
-              e.preventDefault();
-              go("#hero");
-            }}
-            className="font-display text-lg font-extrabold tracking-[0.14em] text-white transition-colors hover:text-blue-300"
-          >
-            {profile.initials}
-          </a>
-
+        <div className="mx-auto flex h-[72px] max-w-[1400px] items-center justify-end px-5 sm:px-8 lg:px-14 xl:px-20">
           {/* Desktop links */}
           <nav className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-9 md:flex">
             {nav.map((item) => {

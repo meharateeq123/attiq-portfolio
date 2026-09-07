@@ -62,10 +62,12 @@ export default function SceneCanvas() {
         onCreated={({ gl }) => {
           // Transparent clear so the page background shows through the layer.
           gl.setClearColor(new THREE.Color("#03050b"), 0);
-          // No tone mapping: it only applies to three's built-in materials, so
-          // with a scene that is mostly custom additive shaders it would dim
-          // the wireframes and rings while leaving the glows untouched.
-          gl.toneMapping = THREE.NoToneMapping;
+          // The core is lit metal now, and ACES is what keeps its highlights
+          // from clipping to flat white. Custom ShaderMaterials (the glows,
+          // grid and streams) are not tone mapped by three, so this only
+          // affects the solids it is meant for.
+          gl.toneMapping = THREE.ACESFilmicToneMapping;
+          gl.toneMappingExposure = 1.15;
         }}
       >
         <Suspense fallback={null}>
